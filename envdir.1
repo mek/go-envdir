@@ -1,0 +1,171 @@
+.TH ENVDIR 1 "March 2026" "envdir" "User Commands"
+
+.SH NAME
+envdir - run a command with environment variables from a directory
+
+.SH SYNOPSIS
+.B envdir
+.I DIR
+.I COMMAND
+.RI [ ARGS... ]
+
+.SH DESCRIPTION
+.B envdir
+reads environment variables from files in
+.I DIR
+and runs
+.I COMMAND
+with those variables applied to its environment.
+
+Each file in
+.I DIR
+represents one environment variable.
+
+The filename becomes the variable name.
+
+The first line of the file becomes the variable value.
+
+Empty files cause the variable to be removed from the environment.
+
+This behavior is inspired by the
+.B envdir
+tool from the
+.B daemontools
+suite by D. J. Bernstein.
+
+.SH DIRECTORY FORMAT
+
+Each regular file in the directory represents one environment variable.
+
+Example directory:
+
+.nf
+env/
+DB_HOST
+DB_PORT
+DEBUG
+.fi
+
+.SH FILE NAME
+
+The filename becomes the environment variable name.
+
+Example:
+
+.nf
+env/DB_HOST
+.fi
+
+Creates:
+
+.nf
+DB_HOST=value
+.fi
+
+.SH FILE CONTENTS
+
+The first line of the file becomes the variable value.
+
+Trailing spaces and tabs are removed.
+
+NUL bytes are converted to newline characters.
+
+Example:
+
+.nf
+env/API_KEY
+.fi
+
+Contents:
+
+.nf
+abcdef12345
+.fi
+
+Result:
+
+.nf
+API_KEY=abcdef12345
+.fi
+
+.SH EMPTY FILES
+
+If a file is empty, the corresponding variable is removed from the environment.
+
+Example:
+
+.nf
+env/DEBUG
+.fi
+
+(empty file)
+
+Result:
+
+The variable
+.B DEBUG
+is unset.
+
+.SH EXAMPLES
+
+Run a program with environment variables from a directory:
+
+.nf
+envdir ./env ./server
+.fi
+
+Directory contents:
+
+.nf
+env/DB_HOST  -> localhost
+env/DB_PORT  -> 5432
+env/DEBUG    -> true
+.fi
+
+The executed program receives:
+
+.nf
+DB_HOST=localhost
+DB_PORT=5432
+DEBUG=true
+.fi
+
+.SH EXIT STATUS
+
+If
+.B envdir
+fails before executing the command, it exits with status
+.B 111.
+
+Otherwise, the exit status of the child command is returned.
+
+.SH SEE ALSO
+
+.BR env (1),
+.BR daemontools (8)
+
+.SH AUTHOR
+
+Go implementation written as a minimal library and CLI tool inspired by
+the original
+.B envdir
+utility by D. J. Bernstein.
+
+.SH PHILOSOPHY
+
+.B envdir
+follows classic Unix design principles:
+
+.IP \(bu 2
+Do one thing well
+.IP \(bu 2
+Prefer simple, readable code
+.IP \(bu 2
+Avoid unnecessary dependencies
+.IP \(bu 2
+Keep the interface small and predictable
+
+.SH COPYRIGHT
+
+Released under the MIT License.
+
