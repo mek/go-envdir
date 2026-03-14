@@ -1,0 +1,14 @@
+bin/
+
+# Go test binaries and coverage output
+*.test
+*.out
+coverage.out
+
+# Backup files
+*~
+*.bak
+*.orig
+
+# Editor metadata
+.DS_Store
