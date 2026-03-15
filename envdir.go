@@ -17,7 +17,8 @@ type Entry struct {
 	Unset bool
 }
 
-// Read reads a directory and returns the environment entries derived from the files
+// Read reads a directory and returns the environment entries derived from
+// the files
 //
 // Each regular file in dir becomes on entry. The file name is the name of the
 // environment variable.
@@ -58,8 +59,9 @@ func Read(dir string) ([]Entry, error) {
 //
 // Or unset an existing variable
 func Apply(base []string, entries []Entry) []string {
-	env := make(map[string]string, len(base))
 
+	// Let's create an array for the current base
+	env := make(map[string]string, len(base))
 	for _, s := range base {
 		name, value, ok := strings.Cut(s, "=")
 		if !ok {
@@ -68,6 +70,8 @@ func Apply(base []string, entries []Entry) []string {
 		env[name] = value
 	}
 
+	// Unset needed entries from current env
+	// Set new values as needed.
 	for _, e := range entries {
 		if e.Unset {
 			delete(env, e.Name)
@@ -76,11 +80,16 @@ func Apply(base []string, entries []Entry) []string {
 		env[e.Name] = e.Value
 	}
 
+	// Get a list of the current variable names
+	// and sort them
 	names := make([]string, 0, len(env))
 	for name := range env {
 		names = append(names, name)
 	}
 	sort.Strings(names)
+
+	// Create a new env array for output
+	// using the requested entries.
 	out := make([]string, 0, len(names))
 	for _, name := range names {
 		out = append(out, name+"="+env[name])
@@ -93,21 +102,29 @@ func Apply(base []string, entries []Entry) []string {
 //
 // If argv is empty, Exec returns an error.
 func Exec(dir string, argv []string) error {
+
+	// bravely refuse to do nothing
 	if len(argv) == 0 {
 		return fmt.Errorf("exec: no command")
 	}
 
+	// read the entires
 	entries, err := Read(dir)
 	if err != nil {
 		return err
 	}
 
+	// Let's setup the child to run
 	cmd := exec.Command(argv[0], argv[1:]...)
+	// Let's get the new environmanet applied to the command
 	cmd.Env = Apply(os.Environ(), entries)
+	// Output the the current process
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// Let's do this, giving this process the return code of the
+	// command we run.
 	return cmd.Run()
 }
 
