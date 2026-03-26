@@ -33,9 +33,18 @@ tool from the
 .B daemontools
 suite by D. J. Bernstein.
 
+In other words, it consults a small directory of facts, many of them temporary,
+some of them empty, and proceeds as though this were the most natural way to
+prepare a process for existence.
+
+This is not entirely unreasonable.
+
 .SH DIRECTORY FORMAT
 
 Each regular file in the directory represents one environment variable.
+
+The arrangement is almost suspiciously simple, which is usually a good sign in
+Unix and a terrible sign in theology.
 
 Example directory:
 
@@ -49,6 +58,8 @@ DEBUG
 .SH FILE NAME
 
 The filename becomes the environment variable name.
+
+The file does not have to explain itself. It merely has to be named.
 
 Example:
 
@@ -69,6 +80,8 @@ The first line of the file becomes the variable value.
 Trailing spaces and tabs are removed.
 
 NUL bytes are converted to newline characters.
+
+This is a modest mercy extended to files that have seen too much.
 
 Example:
 
@@ -91,6 +104,10 @@ API_KEY=abcdef12345
 .SH EMPTY FILES
 
 If a file is empty, the corresponding variable is removed from the environment.
+
+An empty file says nothing, and
+.B envdir
+takes that silence seriously.
 
 Example:
 
@@ -130,6 +147,11 @@ DB_PORT=5432
 DEBUG=true
 .fi
 
+At this point the child process continues with the calm confidence of something
+that has been handed a map, even if the map is only three lines long and one of
+them says
+.B DEBUG=true.
+
 .SH EXIT STATUS
 
 If
@@ -138,6 +160,10 @@ fails before executing the command, it exits with status
 .B 111.
 
 Otherwise, the exit status of the child command is returned.
+
+This is a practical arrangement.
+The universe remains under no obligation to explain why things failed, but at
+least the shell receives a number.
 
 .SH SEE ALSO
 
@@ -165,7 +191,11 @@ Avoid unnecessary dependencies
 .IP \(bu 2
 Keep the interface small and predictable
 
+It does not parse sprawling configuration grammars, negotiate with distant
+systems, or attempt to save anyone from the consequences of their own
+deployment choices.
+It reads files, adjusts an environment, and goes on with its day.
+
 .SH COPYRIGHT
 
 Released under the MIT License.
-

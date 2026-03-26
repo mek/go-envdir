@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestRunUsage checks the CLI usage error path.
 func TestRunUsage(t *testing.T) {
 	var stderr bytes.Buffer
 
@@ -21,6 +22,7 @@ func TestRunUsage(t *testing.T) {
 	}
 }
 
+// TestRunReadError checks that setup failures return the daemontools-style code.
 func TestRunReadError(t *testing.T) {
 	var stderr bytes.Buffer
 
@@ -34,6 +36,7 @@ func TestRunReadError(t *testing.T) {
 	}
 }
 
+// TestRunSuccess checks that the CLI hands the environment to a child process.
 func TestRunSuccess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") == "1" {
 		if got := os.Getenv("TEST_VALUE"); got != "from-envdir" {
@@ -61,6 +64,7 @@ func TestRunSuccess(t *testing.T) {
 	}
 }
 
+// writeFile writes one test file for the CLI tests.
 func writeFile(t *testing.T, dir, name, contents string) {
 	t.Helper()
 

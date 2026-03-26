@@ -10,33 +10,32 @@ import (
 	"strings"
 )
 
-// Entry describes one environment change from a file
+// Entry describes one environment change read from a file.
+// A file may contribute a value, or it may quietly insist that the variable
+// should not exist at all.
 type Entry struct {
 	Name  string
 	Value string
 	Unset bool
 }
 
-// Read reads a directory and returns the environment entries derived from the files
+// Read reads dir and returns the environment changes described by its files.
 //
-// Each regular file in dir becomes on entry. The file name is the name of the
-// environment variable.
+// Each file in dir becomes one entry. The file name is the environment
+// variable name, which is an arrangement simple enough to be trusted.
 //
-// If the file is empty, the variable is to be unset.
+// If the file is empty, the variable is unset.
 //
-// If the file is not empty, the value is take from the first line of the file.
-// Trailing spaces and tabs are removed.
+// If the file is not empty, the value comes from the first line.
+// Trailing spaces and tabs are removed, because they rarely improve matters.
 //
-// NULs are are turned to newlines.
+// NUL bytes are turned into newlines before the first line is chosen.
 func Read(dir string) ([]Entry, error) {
-
-	// read the names
 	names, err := readNames(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	// get the entry information for each name
 	entries := make([]Entry, 0, len(names))
 	for _, name := range names {
 		entry, err := readEntry(dir, name)
@@ -48,15 +47,10 @@ func Read(dir string) ([]Entry, error) {
 	return entries, nil
 }
 
-// Apply applies entries to the base, returning the environment
+// Apply applies entries to base and returns the resulting environment.
 //
-// Each entry will either:
-//
-// # Add a new variable
-//
-// # Replace a new variable
-//
-// Or unset an existing variable
+// Entries add, replace, or remove variables. The final result is sorted by
+// name so that the outcome is stable even when the wider world is not.
 func Apply(base []string, entries []Entry) []string {
 	env := make(map[string]string, len(base))
 
@@ -88,10 +82,12 @@ func Apply(base []string, entries []Entry) []string {
 	return out
 }
 
-// Exec runs argv[0] with arguments argv[1:] using environment settings read
-// from dir. The current process environment is used as the base.
+// Exec runs argv[0] with argv[1:] using environment settings read from dir.
+// The current process environment is used as the base before those changes are
+// applied.
 //
-// If argv is empty, Exec returns an error.
+// If argv is empty, Exec returns an error rather than pretending a command
+// might appear if everyone waits long enough.
 func Exec(dir string, argv []string) error {
 	if len(argv) == 0 {
 		return fmt.Errorf("exec: no command")
@@ -111,6 +107,9 @@ func Exec(dir string, argv []string) error {
 	return cmd.Run()
 }
 
+// readNames returns the sorted variable names found in dir.
+// Only regular files are considered. Directories, symlinks, and other special
+// entries are ignored before variable-name validation.
 func readNames(dir string) ([]string, error) {
 	items, err := os.ReadDir(dir)
 	if err != nil {
@@ -119,7 +118,11 @@ func readNames(dir string) ([]string, error) {
 
 	names := make([]string, 0, len(items))
 	for _, item := range items {
-		if item.IsDir() {
+		info, err := item.Info()
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", filepath.Join(dir, item.Name()), err)
+		}
+		if !info.Mode().IsRegular() {
 			continue
 		}
 
@@ -135,6 +138,9 @@ func readNames(dir string) ([]string, error) {
 	return names, nil
 }
 
+// readEntry reads one file and turns it into a single environment change.
+// Empty files unset variables; non-empty files contribute their first line
+// after NUL conversion and trailing space trimming.
 func readEntry(dir, name string) (Entry, error) {
 	path := filepath.Join(dir, name)
 
@@ -164,6 +170,8 @@ func readEntry(dir, name string) (Entry, error) {
 	}, nil
 }
 
+// validName reports whether name can stand as an environment variable name.
+// The rules are small: no empty names, no '=', no '/', and no NUL bytes.
 func validName(name string) bool {
 	if name == "" {
 		return false

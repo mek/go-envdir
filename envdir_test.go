@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestRead checks the main file-to-entry behaviors in one place.
 func TestRead(t *testing.T) {
 	dir := t.TempDir()
 
@@ -35,6 +36,7 @@ func TestRead(t *testing.T) {
 	}
 }
 
+// TestReadInvalidName checks that bad file names are rejected early.
 func TestReadInvalidName(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "GOOD", "ok")
@@ -49,6 +51,38 @@ func TestReadInvalidName(t *testing.T) {
 	}
 }
 
+// TestReadSkipsNonRegularFiles checks that symlinks and directories are ignored.
+func TestReadSkipsNonRegularFiles(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "GOOD", "ok")
+
+	target := filepath.Join(dir, "target")
+	if err := os.WriteFile(target, []byte("hidden"), 0o644); err != nil {
+		t.Fatalf("WriteFile(%q) error = %v", target, err)
+	}
+
+	if err := os.Symlink(target, filepath.Join(dir, "LINK")); err != nil {
+		t.Fatalf("Symlink() error = %v", err)
+	}
+	if err := os.Mkdir(filepath.Join(dir, "SUBDIR"), 0o755); err != nil {
+		t.Fatalf("Mkdir() error = %v", err)
+	}
+
+	entries, err := Read(dir)
+	if err != nil {
+		t.Fatalf("Read(%q) error = %v", dir, err)
+	}
+
+	want := []Entry{
+		{Name: "GOOD", Value: "ok"},
+		{Name: "target", Value: "hidden"},
+	}
+	if !reflect.DeepEqual(entries, want) {
+		t.Fatalf("Read(%q) = %#v, want %#v", dir, entries, want)
+	}
+}
+
+// TestApply checks that entries add, replace, and remove variables as expected.
 func TestApply(t *testing.T) {
 	base := []string{
 		"KEEP=1",
@@ -75,6 +109,7 @@ func TestApply(t *testing.T) {
 	}
 }
 
+// TestExecNoCommand checks that Exec refuses an empty command line.
 func TestExecNoCommand(t *testing.T) {
 	err := Exec(t.TempDir(), nil)
 	if err == nil {
@@ -85,6 +120,8 @@ func TestExecNoCommand(t *testing.T) {
 	}
 }
 
+// writeFile writes one test file into dir.
+// Tests deserve small conveniences too.
 func writeFile(t *testing.T, dir, name, contents string) {
 	t.Helper()
 
