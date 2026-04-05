@@ -10,6 +10,7 @@ This project provides:
 
 * a small reusable **Go library**
 * a minimal **CLI tool**
+* a small **sample file server**
 
 The implementation favors **simplicity, clarity, and Unix-style design**.
 
@@ -162,6 +163,66 @@ func main() {
 
 ---
 
+# Sample File Server
+
+There is a small sample program in `examples/fileserver`.
+
+It reads an envdir directory, applies the entries to the current environment,
+and then serves files with `http.FileServer`.
+
+Build it with:
+
+```sh
+make build-examples
+```
+
+That produces:
+
+```text
+./bin/fileserver
+```
+
+Environment variables used by the sample:
+
+* `SERVER_HOST` default `127.0.0.1`
+* `SERVER_PORT` default `8080`
+* `SERVER_DIR` default `.`
+
+Example envdir layout:
+
+```
+examples/fileserver/env/
+  SERVER_HOST
+  SERVER_PORT
+  SERVER_DIR
+```
+
+Run it directly:
+
+```sh
+go run ./examples/fileserver ./examples/fileserver/env
+```
+
+Or run the built binary:
+
+```sh
+./bin/fileserver ./examples/fileserver/env
+```
+
+Then visit:
+
+```text
+http://127.0.0.1:8090/
+```
+
+You can also run the same program through the CLI:
+
+```sh
+go run ./cmd/envdir ./examples/fileserver/env go run ./examples/fileserver
+```
+
+---
+
 # Design Philosophy
 
 This project intentionally stays small.
@@ -188,4 +249,3 @@ The core functionality is implemented and the API may still evolve.
 # License
 
 MIT
-

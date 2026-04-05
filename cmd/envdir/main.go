@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 
 	"github.com/mek/go-envdir"
 )
@@ -24,6 +26,10 @@ func run(args []string, stderr io.Writer) int {
 
 	if err := envdir.Exec(args[0], args[1:]); err != nil {
 		fmt.Fprintln(stderr, err)
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			return exitErr.ExitCode()
+		}
 		return 111
 	}
 

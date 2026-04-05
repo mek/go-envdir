@@ -1,23 +1,31 @@
 GO ?= go
 GOFMT ?= gofmt
 PKGS := ./...
-BIN := bin/envdir
+BIN_DIR := bin
+BIN := $(BIN_DIR)/envdir
+FILESERVER_BIN := $(BIN_DIR)/fileserver
 GOFILES := $(shell find . -name '*.go' -not -path './bin/*' -print)
 
 .DEFAULT_GOAL := help
 
-.PHONY: all build check clean fmt fmt-check help tidy test vet
+.PHONY: all build build-cli build-examples check clean fmt fmt-check help tidy test vet
 
 all: check build # Build after running checks
 
-build: # Build the envdir CLI
-	@mkdir -p bin
+build: build-cli build-examples # Build the CLI and sample programs
+
+build-cli: # Build the envdir CLI
+	@mkdir -p $(BIN_DIR)
 	$(GO) build -o $(BIN) ./cmd/envdir
+
+build-examples: # Build the sample programs
+	@mkdir -p $(BIN_DIR)
+	$(GO) build -o $(FILESERVER_BIN) ./examples/fileserver
 
 check: fmt-check vet test # Run formatting checks, vet, and tests
 
 clean: # Remove build artifacts
-	rm -rf bin
+	rm -rf $(BIN_DIR)
 
 fmt: # Format Go source files
 	$(GOFMT) -w $(GOFILES)

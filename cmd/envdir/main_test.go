@@ -64,6 +64,30 @@ func TestRunSuccess(t *testing.T) {
 	}
 }
 
+// TestRunChildExitCode checks that the CLI returns the child's non-zero status.
+func TestRunChildExitCode(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") == "child-exit-7" {
+		os.Exit(7)
+	}
+
+	dir := t.TempDir()
+	writeFile(t, dir, "TEST_VALUE", "from-envdir\n")
+
+	var stderr bytes.Buffer
+	args := []string{
+		dir,
+		os.Args[0],
+		"-test.run=TestRunChildExitCode",
+	}
+
+	t.Setenv("GO_WANT_HELPER_PROCESS", "child-exit-7")
+
+	code := run(args, &stderr)
+	if code != 7 {
+		t.Fatalf("run() code = %d, want 7, stderr = %q", code, stderr.String())
+	}
+}
+
 // writeFile writes one test file for the CLI tests.
 func writeFile(t *testing.T, dir, name, contents string) {
 	t.Helper()
