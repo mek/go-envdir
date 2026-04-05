@@ -11,6 +11,7 @@ This project provides:
 * a small reusable **Go library**
 * a minimal **CLI tool**
 * a small **sample file server**
+* manual pages for the CLI and sample command
 
 The implementation favors **simplicity, clarity, and Unix-style design**.
 
@@ -46,11 +47,14 @@ This will:
 2. Apply them to the current environment
 3. Run `./myapp`
 
+If setup fails before the child command starts, `envdir` exits with status `111`.
+Otherwise it returns the child's exit status.
+
 ---
 
 # Directory Format
 
-Each file in the directory represents one environment variable.
+Each regular file in the directory represents one environment variable.
 
 Example:
 
@@ -95,6 +99,7 @@ Behavior follows the traditional `envdir` design.
 | File contains text   | first line becomes value |
 | Trailing spaces/tabs | removed                  |
 | NUL bytes            | converted to newline     |
+| Non-regular entries  | ignored                  |
 
 ---
 
@@ -167,8 +172,8 @@ func main() {
 
 There is a small sample program in `examples/fileserver`.
 
-It reads an envdir directory, applies the entries to the current environment,
-and then serves files with `http.FileServer`.
+It optionally reads an envdir directory, applies the entries to the current
+environment, and then serves files with `http.FileServer`.
 
 Build it with:
 
@@ -187,6 +192,9 @@ Environment variables used by the sample:
 * `SERVER_HOST` default `127.0.0.1`
 * `SERVER_PORT` default `8080`
 * `SERVER_DIR` default `.`
+
+If the envdir argument does not exist, the sample falls back to the current
+process environment and defaults. Other read errors still fail fast.
 
 Example envdir layout:
 
@@ -219,6 +227,25 @@ You can also run the same program through the CLI:
 
 ```sh
 go run ./cmd/envdir ./examples/fileserver/env go run ./examples/fileserver
+```
+
+Manual pages:
+
+```sh
+man ./envdir.1
+man ./examples/fileserver/fileserver.1
+```
+
+Install them into your local manpath:
+
+```sh
+make install-man
+```
+
+To choose a different destination:
+
+```sh
+make install-man MANDIR="$HOME/.local/share/man"
 ```
 
 ---

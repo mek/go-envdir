@@ -1,0 +1,90 @@
+.TH FILESERVER 1 "April 2026" "fileserver" "User Commands"
+
+.SH NAME
+fileserver - serve static files using configuration from an envdir directory
+
+.SH SYNOPSIS
+.B fileserver
+.RI [ DIR ]
+
+.SH DESCRIPTION
+.B fileserver
+is a small example program included with
+.BR envdir .
+It optionally reads environment settings from
+.I DIR
+and serves files over HTTP.
+
+If
+.I DIR
+is omitted, the program uses
+.BR ./env .
+
+If
+.I DIR
+does not exist, the program falls back to the current process environment and
+its built-in defaults. Other errors while reading
+.I DIR
+cause the program to exit with an error.
+
+.SH ENVIRONMENT
+
+The program recognizes these variables:
+
+.TP
+.B SERVER_HOST
+Host or IP address to bind.
+Default:
+.BR 127.0.0.1 .
+
+.TP
+.B SERVER_PORT
+TCP port to listen on.
+Default:
+.BR 8080 .
+
+.TP
+.B SERVER_DIR
+Directory to serve.
+Default:
+.BR . .
+
+.SH EXAMPLES
+
+Serve files using the example envdir:
+
+.nf
+fileserver ./examples/fileserver/env
+.fi
+
+Serve the current directory on port 9000 without an envdir:
+
+.nf
+SERVER_PORT=9000 SERVER_DIR=. fileserver ./missing-envdir
+.fi
+
+Run the example through
+.BR envdir :
+
+.nf
+envdir ./examples/fileserver/env fileserver
+.fi
+
+.SH EXIT STATUS
+
+The program exits with status 0 on success.
+Configuration or server startup errors cause a non-zero exit status.
+
+.SH SEE ALSO
+
+.BR envdir (1)
+
+.SH AUTHOR
+
+Example program in the
+.B envdir
+repository.
+
+Mat Kovach
+.UR https://github.com/mek/go-envdir
+.UE
