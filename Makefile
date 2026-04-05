@@ -4,11 +4,12 @@ PKGS := ./...
 BIN_DIR := bin
 BIN := $(BIN_DIR)/envdir
 FILESERVER_BIN := $(BIN_DIR)/fileserver
+MANDIR ?= /usr/local/share/man
 GOFILES := $(shell find . -name '*.go' -not -path './bin/*' -print)
 
 .DEFAULT_GOAL := help
 
-.PHONY: all build build-cli build-examples check clean fmt fmt-check help tidy test vet
+.PHONY: all build build-cli build-examples check clean fmt fmt-check help install-man tidy test vet
 
 all: check build # Build after running checks
 
@@ -36,6 +37,11 @@ fmt-check: # Fail if Go files are not formatted
 
 help: # Show available make targets
 	@awk 'BEGIN {FS = ":.*# "}; /^[[:alnum:]_-]+:.*# / {printf "make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+install-man: # Install man pages under $(MANDIR)/man1
+	@mkdir -p $(MANDIR)/man1
+	install -m 0644 envdir.1 $(MANDIR)/man1/envdir.1
+	install -m 0644 examples/fileserver/fileserver.1 $(MANDIR)/man1/fileserver.1
 
 tidy: # Tidy module dependencies
 	$(GO) mod tidy

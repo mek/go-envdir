@@ -11,8 +11,7 @@ import (
 )
 
 // Entry describes one environment change read from a file.
-// A file may contribute a value, or it may quietly insist that the variable
-// should not exist at all.
+// A file may set a value or mark the variable for removal.
 type Entry struct {
 	Name  string
 	Value string
@@ -21,15 +20,13 @@ type Entry struct {
 
 // Read reads dir and returns the environment changes described by its files.
 //
-// Each file in dir becomes one entry. The file name is the environment
-// variable name, which is an arrangement simple enough to be trusted.
+// Each regular file in dir becomes one entry. The file name is the
+// environment variable name.
 //
 // If the file is empty, the variable is unset.
 //
-// If the file is not empty, the value comes from the first line.
-// Trailing spaces and tabs are removed, because they rarely improve matters.
-//
-// NUL bytes are turned into newlines before the first line is chosen.
+// If the file is not empty, the value comes from the first line after NUL
+// bytes are converted to newlines. Trailing spaces and tabs are removed.
 func Read(dir string) ([]Entry, error) {
 	names, err := readNames(dir)
 	if err != nil {
@@ -49,8 +46,8 @@ func Read(dir string) ([]Entry, error) {
 
 // Apply applies entries to base and returns the resulting environment.
 //
-// Entries add, replace, or remove variables. The final result is sorted by
-// name so that the outcome is stable even when the wider world is not.
+// Entries add, replace, or remove variables. The result is sorted by name for
+// stable output.
 func Apply(base []string, entries []Entry) []string {
 
 	// Let's create an array for the current base
@@ -94,8 +91,7 @@ func Apply(base []string, entries []Entry) []string {
 // The current process environment is used as the base before those changes are
 // applied.
 //
-// If argv is empty, Exec returns an error rather than pretending a command
-// might appear if everyone waits long enough.
+// If argv is empty, Exec returns an error.
 func Exec(dir string, argv []string) error {
 
 	// bravely refuse to do nothing

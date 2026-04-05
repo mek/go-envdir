@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -25,14 +26,16 @@ func TestRunUsage(t *testing.T) {
 // TestRunReadError checks that setup failures return the daemontools-style code.
 func TestRunReadError(t *testing.T) {
 	var stderr bytes.Buffer
+	missing := filepath.Join(t.TempDir(), "missing")
 
-	code := run([]string{filepath.Join(t.TempDir(), "missing"), "true"}, &stderr)
+	code := run([]string{missing, "true"}, &stderr)
 	if code != 111 {
 		t.Fatalf("run() code = %d, want 111", code)
 	}
 
-	if stderr.Len() == 0 {
-		t.Fatal("run() stderr is empty, want error output")
+	want := fmt.Sprintf("read %s:", missing)
+	if !strings.Contains(stderr.String(), want) {
+		t.Fatalf("run() stderr = %q, want substring %q", stderr.String(), want)
 	}
 }
 
